@@ -1,0 +1,24 @@
+用phantomjs抓取html乱码的解决方案：
+phantomjs –output-encoding=gbk test.js http://webscan.360.cn/index/checkwebsite?url=www.coding123.net
+这两个参数可以指定编码 …
+
+–output-encoding=encoding sets the encoding used for terminal output (default is utf8).
+–script-encoding=encoding sets the encoding used for the starting script (default is utf8).
+
+设置成 GBK 就可以了 …
+
+或者
+phantom.outputEncoding=”gbk”;
+
+用phantomjs截图时中文乱码的解决方案：
+
+用phantomjs去截取中文页面的网站可能会出现乱码的情况，也就是截图中中文的位置全是方框。
+解决办法就是安装字体。
+在centos中执行：yum install bitmap-fonts bitmap-fonts-cjk
+在ubuntu中执行：sudo apt-get install xfonts-wqy
+这样再去截图中文的页面就不会出现一堆的方框了。
+———————
+作者：dakang
+来源：CSDN
+原文：https://blog.csdn.net/kaosini/article/details/47252457
+版权声明：本文为博主原创文章，转载请附上博文链接！
