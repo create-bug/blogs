@@ -1,0 +1,151 @@
+1 创建数据库和账号
+创建测试用的数据库 alchemy 和账号 alc，密码 alc。
+
+CREATE DATABASE alchemy;
+CREATE USER 'alc'@'localhost' IDENTIFIED BY 'alc';
+USE alchemy;
+GRANT ALL ON alchemy.* TO 'alc'@'localhost';
+FLUSH PRIVILEGES ;
+2 创建配置参数
+放在文件 configs.py 中，
+
+HOSTNAME = 'localhost'
+DATABASE = 'alchemy'
+USERNAME = 'alc'
+PASSWORD = 'alc'
+DB_URI = 'mysql://{}:{}@{}/{}'.format(
+    USERNAME, PASSWORD, HOSTNAME, DATABASE
+)
+3 用 SQLAlchemy 创建数据库
+新建一个 Python 文件，名叫 create_table.py，用于编写逻辑。用 SQLAlchemy 的 ORM 创建一个数据库，并且插入数据，并查询数据。
+
+# -*- coding:utf-8 -*-
+from sqlalchemy import create_engine, Column, Integer, String, Sequence
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+
+from configs import DB_URI
+
+eng = create_engine(DB_URI)     # 相当于 MySQLdb 的 connection，数据库连接 API
+Base = declarative_base()       # sqlalchemy 提供的基类
+
+class School(Base):
+    __tablename__ = 'school'
+    id = Column(Integer, Sequence('school_id_seq'), primary_key=True, autoincrement=True)
+    name = Column(String(30))
+
+# 删除并新建 Base 中的表，这里 Base 仅有 school 表
+Base.metadata.drop_all(bind=eng)
+Base.metadata.create_all(bind=eng)
+
+# 创建 session 事务
+Session = sessionmaker(bind=eng)
+session = Session()
+
+# 事务中增加记录，并提交 commit
+session.add(School(name='Adam'))
+session.add_all([School(name=student_name) for student_name in ('James', 'Marrie', 'Charlie', 'David')])
+session.commit()
+
+# 获取查询结果的辅助函数
+def show_query_result(rest):
+    for student in rest:
+        print student.name
+
+# 查询所有记录并显示
+rest = session.query(School).all()
+show_query_result(rest)
+得到结果：
+
+Adam
+James
+Marrie
+Charlie
+David
+在 MySQL 中核实：
+
+mysql> USE alchemy; SELECT * FROM school LIMIT 10;
+Database changed
++----+---------+
+| id | name    |
++----+---------+
+|  1 | Adam    |
+|  2 | James   |
+|  3 | Marrie  |
+|  4 | Charlie |
+|  5 | David   |
++----+---------+
+5 rows in set (0.00 sec)
+
+mysql> DESC school;
++-------+-------------+------+-----+---------+----------------+
+| Field | Type        | Null | Key | Default | Extra          |
++-------+-------------+------+-----+---------+----------------+
+| id    | int(11)     | NO   | PRI | NULL    | auto_increment |
+| name  | varchar(30) | YES  |     | NULL    |                |
++-------+-------------+------+-----+---------+----------------+
+2 rows in set (0.00 sec)
+4 SQLAlchemy 连接已有数据库
+新建文件 reflect_table.py 用于测试 SQLAlchemy 连接以后数据的功能。
+
+# -*- coding:utf-8 -*-
+from sqlalchemy import *
+from sqlalchemy.orm import create_session
+from sqlalchemy.ext.declarative import declarative_base
+
+from configs import DB_URI
+
+Base = declarative_base()
+engine = create_engine(DB_URI)
+metadata = MetaData(bind=engine)
+
+class School(Base):
+    '''映射已有的数据库，传入三个参数：数据库名称、metadata（绑定接口）、autoload=True'''
+    __table__ = Table('school', metadata, autoload=True)
+
+def show_query_result(rest):
+    for student in rest:
+        print student.name
+
+# 创建事务
+session = create_session(bind=engine)
+
+# 测试数据库查询功能
+rest = session.query(School).all()
+show_query_result(rest)
+
+print '-' * 15
+
+# 测试增加记录功能
+session.begin()
+session.add(School(name='Derek'))
+session.commit()
+
+# 查询增加结果
+rest = session.query(School).all()
+show_query_result(rest)
+结果成功，可以查询，也可以新增数据
+
+Adam
+James
+Marrie
+Charlie
+David
+---------------
+Adam
+James
+Marrie
+Charlie
+David
+Derek
+5 参考
+官方文档主要是 SQLAlchemy 的reflect 部分。
+
+Python Web开发实战
+
+How to automatically reflect database to sqlalchemy declarative?
+
+作者：Tim_Lee
+链接：https://www.jianshu.com/p/9893aaf40b91
+來源：简书
+简书著作权归作者所有，任何形式的转载都请联系作者获得授权并注明出处。
