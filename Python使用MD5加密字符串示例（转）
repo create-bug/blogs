@@ -1,0 +1,64 @@
+Python加密模块有好几个，但无论是哪种加密方式都需要先导入相应的加密模块然后再使用模块对字符串加密。
+
+先导入md5加密所需模块：
+
+复制代码代码如下:
+import hashlib
+创建md5对象
+
+复制代码代码如下:
+m = hashlib.md5()
+生成加密串，其中 password 是要加密的字符串
+
+复制代码代码如下:
+m.update(‘password’)
+获取加密串
+
+复制代码代码如下:
+psw = m.hexdigest()
+输出
+
+复制代码代码如下:
+print psw
+执行：
+
+复制代码代码如下:
+5f4dcc3b5aa765d61d8327deb882cf99
+为了方便，我们可以写成函数，直接传入要加密的字符串调用即可
+
+复制代码代码如下:
+def md5(str):
+import hashlib
+m = hashlib.md5()
+m.update(str)
+return m.hexdigest()
+调用：
+
+复制代码代码如下:
+str = md5(‘password’)
+如果传入的参数不是字符串会报错
+
+复制代码代码如下:
+str = md5([‘a’,’b’])
+报错：
+
+复制代码代码如下:
+Traceback (most recent call last):
+File “D:\python\demo1\c.py”, line 9, in <module>
+str = md5([‘a’,’b’])
+File “D:\python\demo1\c.py”, line 5, in md5
+m.update(str)
+TypeError: must be string or buffer, not list
+我们可以对传入的类型检测，避免报错
+
+复制代码代码如下:
+def md5(str):
+import hashlib
+import types
+if type(str) is types.StringType:
+m = hashlib.md5()
+m.update(str)
+return m.hexdigest()
+else:
+return ”
+当我们传入的参数为字符串即可正确返回加密串，其他类型均返回空！
