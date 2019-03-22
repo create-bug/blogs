@@ -1,0 +1,7 @@
+原文： https://zhidao.baidu.com/question/552863222102373092.html
+
+abedef”,”123456″
+这样保存会被隔开么？
+
+追问
+知道怎么回事了。.writerow()方法中的参数是list类型，必须是writer.writerow(['abcd'])才可以，不然就会被逗号分开
