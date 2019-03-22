@@ -1,0 +1,6 @@
+
+关闭selinux即可
+
+假设selinux是正在运行的，我们可以使用setenforce 命令设置临时关闭，不用重启生效。
+
+setenforce 0
