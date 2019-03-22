@@ -1,0 +1,33 @@
+原文： https://edu.aliyun.com/a/5696
+
+摘要： 本文实例讲述了Django中模型Model添加JSON类型字段的方法。分享给大家供大家参考。具体如下：Django里面让Model用于JSON字段，添加一个JSONField自动类型如下：class JSONField(models.TextField): __metaclass__ = models.SubfieldBase description = “Json” d…
+本文实例讲述了Django中模型Model添加JSON类型字段的方法。分享给大家供大家参考。具体如下：
+
+Django里面让Model用于JSON字段，添加一个JSONField自动类型如下：
+
+class JSONField(models.TextField): 
+  __metaclass__ = models.SubfieldBase 
+  description = "Json" 
+  def to_python(self， value): 
+    v = models.TextField.to_python(self， value) 
+    try: 
+      return json.loads(v)['v'] 
+    except: 
+      pass 
+    return v 
+  def get_prep_value(self， value): 
+    return json.dumps({'v':value
+之后就直接为Model定义JSONField类型字段了
+
+class Category(models.Model): 
+  name = fields.MedialNameField() 
+  other= fields.JSONField() 
+
+使用很方便：
+复制代码 代码如下:Category.objects.create(name=”C1″， other=(1，2，3，4，5))
+
+所有可以被json序列化的类型都可以直接赋值给other字段，很方便吧。
+
+希望本文所述对大家的Python程序设计有所帮助。
+
+以上是互联网用户为您的的内容，在阿里云内部有更多的关于Django中模型Model添加JSON类型字段的方法_python的内容，欢迎继续使用右上角搜索按钮进行搜索json、django、模型Model、以便于您获取更多的相关信息。
