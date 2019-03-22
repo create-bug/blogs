@@ -1,0 +1,191 @@
+原文： https://www.cnblogs.com/bainianminguo/p/6676067.html
+
+#Auther Bob
+#--*--conding:utf-8 --*--
+
+#jshon这个模块就是做序列化处理的，主要用到json模块的四种方法
+
+#1、dumps
+#2、loads
+#3、dump
+#4、load
+
+#先介绍dumps方法
+#通过jshon的dumps的模块可以把特定的对象序列化处理为字符串
+# import json
+
+
+# l1 = [1,2,3,454]
+# d1 = {'k1':'v1'}
+# ret = json.dumps(l1)
+# print(type(ret))
+# ret = json.dumps(d1)
+# print(type(ret))
+
+
+# <class 'str'>
+# <class 'str'>
+
+
+# l1 = '[1,2,3,4]'
+# d1 = '{"k1":"v1"}'
+# print(type(l1))
+# print(type(d1))
+
+#在来介绍loads方法
+#上面的l1和d1都是字符串，但是他们的外形和list和dict一样，我们就可以通过反序列化把这2个字符串转换成list和dict，这里如果
+#外形不是list或者dict的形状，则不会转换成功的,这里必须要注意，字符串的外面的引号必须是“单引号”，内部必须是双引号，如果不是这样，json模块会报错的
+# ret = json.loads(l1)
+# print(ret,type(ret))
+# ret = json.loads(d1)
+# print(ret,type(ret))
+
+
+# [1, 2, 3, 4] <class 'list'>
+# {'k1': 'v1'} <class 'dict'>
+
+
+
+
+#来做一个小练习,通过第三方模块get到http请求，然后json模块把返回的字符串结构的数据转换字典的形式，这样我们就可以
+#对这个字典做操作
+# import requests
+# import json
+#
+# ret = requests.get('http://wthrcdn.etouch.cn/weather_mini?city)
+# ret.encoding = 'utf-8'
+# s1 = ret.text
+# print(s1,type(s1))
+
+#拿到字符串形式的数据
+# {"desc":"invilad-citykey","status":1002} <class 'str'>
+#
+# d1 = json.loads(s1)
+# print(d1,type(d1))
+
+#通过loads的方法，把字符串转换成字典
+# {'desc': 'invilad-citykey', 'status': 1002} <class 'dict'>
+
+#上面的dumps和loads方法都在内存中转换，下面的dump和load的方法会多一个步骤，dump是把序列化后的字符串写到一个文件中，而
+#load是从一个一个文件中读取文件
+
+#然后来介绍dump方法
+# import json
+# d1 = {'name':'foot'}
+#这一步就会把d1做序列化处理后的字符串写到db这个文件中
+
+# json.dump(d1,open('db','wjjson.load(open('db','rd1,type(d1))
+
+# {'name': 'foot'} <class 'dict'>
+
+
+今天又学习了shelve这个模块，这个模块用起来还是很简单的
+复制代码
+import shelve
+
+f = shelve.open("shelve_test'info'] = "alex"
+f["age"] = [1,34,5,6,33,44]
+f["name"] = {"name":"alex","add":"sz"}
+f.close()
+
+f = shelve.open("shelve_test这里这个f我们就可以理解为是一个字典对象，所以shelve存储数据就按照字典的方式存储数据
+
+
+print(f.get("info"))
+print(f.get("age"))
+print(f.get("name"))
+print(f['info'])
+print(f.values())
+print(f.items())
+print(f.keys())
+复制代码
+ 
+
+结果如下
+
+1
+2
+3
+4
+5
+6
+7
+alex
+[1, 34, 5, 6, 33, 44]
+{'name': 'alex', 'add': 'sz'}
+alex
+ValuesView(<shelve.DbfilenameShelf object at 0x019EB250>)
+ItemsView(<shelve.DbfilenameShelf object at 0x019EB250>)
+KeysView(<shelve.DbfilenameShelf object at 0x019EB250>)
+ 
+
+shelve也可以用with的方式打开
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+import shelve
+with shelve.open("test_shelve.db") as f:
+    f["k1"] = {
+        "name":"zhangguojun1",
+        "age":12,
+        "address":"shenzhen1"
+    }
+    f["k2"] = {
+        "name":"zhangguojun2",
+        "age":12,
+        "address":"shenzhen2"
+    }
+    f["k3"] = {
+        "name":"zhangguojun3",
+        "age":12,
+        "address":"shenzhen3"
+    }
+    f["k4"] = ["张国军1","张国军2","张国军3"]
+with shelve.open("test_shelve.db") as f:
+    print(f["k1"]["name"])
+    print(f["k4"][0])
+ 
+
+结果如下
+
+1
+2
+zhangguojun1
+张国军1
+ 
+
+1
+2
+3
+4
+5
+6
+7
+8
+9
+with shelve.open("shelve.ini","w") as f:
+    f["k1"] = test_list
+    f["k2"] = test_dict
+    f["k3"] = s
+with shelve.open("shelve.ini","r") as f:
+    print(f["k3"])
+    print(f["k2"])
+    print(f["k1"])
