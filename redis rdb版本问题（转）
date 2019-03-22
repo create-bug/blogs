@@ -1,0 +1,22 @@
+原文： http://wordpress.redirectingat.com/?id=725X1342&xcust=8982&xs=1&isjs=1&url=http%3A%2F%2Fwww.it-refer.com%2F2016%2F09%2F26%2Flow-versioned-redis-cannot-handle-rdb-of-a-high-version%2F&xguid=01D6HH5AKEBVXDY4WYZ867TSN7&xuuid=08649ffa0f8605c66906fb25cec9008a&xsessid=&xcreo=0&xed=0&sref=https%3A%2F%2Fgotoprograming.wordpress.com%2Fpage%2F1%2F&xtz=-480&jv=13.13.8-stackpath&bv=2.5.1
+
+今天做了一个操作导致Redis无法启动。
+
+在部署某一程序的过程中，先是单独安装了3.2.3版本的redis，安装完成后ps一下，redis已经启动。然后又使用安装包部署程序，安装包中包含一个2.8.13版本的redis，直接把之前装的3.2.3的redis给覆盖掉了。程序安装完成后发现redis进程没了，而且通过service redis_6379 restart无法启动。
+
+怎么回事？查看/var/log/redis_6379.log发现如下错误：
+
+[31934] 26 Sep 11:31:47.087 # Can’t handle RDB format version 7
+[31934] 26 Sep 11:31:47.087 # Fatal error loading the DB: Invalid argument. Exiting.
+
+哦，当前版本的redis无法处理version=7的RDB格式，这才明白是兼容性问题，但这种“向前兼容”一般很难做到的。
+
+解决办法：删除rdb文件/var/lib/redis/6379/dump.rdb，重启redis就行了。
+
+2017.11.08：今天在redis官网上看到一篇文章，是介绍redis rdb文件版本历史的，参这里。详细介绍了各版本的演进历史，并说明了高版本rdb文件回退到低版本的方法，有需要的朋友可以了解一下。
+
+相关文章:
+磁盘空间不足导致redis无法正常运行
+安装redis需要注意的几点信息
+Redis安全性配置
+使用openresty+redis轻松实现网站访问统计
