@@ -1,0 +1,125 @@
+Cookies 有两种存在形式
+
+cookie数据是保存在内存中：关掉浏览器就失效
+Cookie数据存放到文件中：有一定的有效时间，记住登录状态就可以通过这个。
+# cookielib
+Python中有自带的模块：cookielib 非常强大，可以处理这些。
+
+# 自动保存内存中并在访问请求时带上
+url = 'http://www.douban.com'
+
+cookie = cookielib.CookieJar()
+opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cookie))
+opener.open(url)
+# Cookies 保存为文件有三种格式：
+它们的关系：CookieJar —-派生—->FileCookieJar —-派生—–>MozillaCookieJar和LWPCookieJar
+
+FileCookieJar(filename)
+
+创建FileCookieJar实例，检索cookie信息并将信息存储到文件中，filename是文件名。
+
+MozillaCookieJar(filename)
+
+创建与Mozilla cookies.txt文件兼容的FileCookieJar实例。
+
+LWPCookieJar(filename)
+
+创建与libwww-perl Set-Cookie3文件兼容的FileCookieJar实例。
+
+FileCookieJar save时有点问题，所以这里我采用Mozilla的文件的方式，你也可以用其他的
+
+# 把Cookies 存入文件
+cookieFile = "Cookies_saved.txt";
+cookieJar = cookielib.MozillaCookieJar(cookieFile);
+cookieJar.save();
+opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cookieJar));
+
+#open a url and  urllib2 will auto handle cookies
+response = opener.open(url)
+cookieJar.save();
+# 从文件中读取Cookies并访问时带上Cookies
+login_url = 'http://www.douban.com/accounts/login'
+cookie = cookielib.MozillaCookieJar('Cookies.txt')
+cookie.load('Cookies_saved.txt')
+
+opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cookie))
+opener.open(login_url)
+# Requests
+Requests 大法好，这个包就是因为觉得官方urlib/urllib2 API太渣了，才开发的这个包。所以这个包是非常的好用。
+
+# 自带cookies访问
+可以把cookies写在header里，或者单独存在字典里，然后带上访问，如下面：
+
+cookies = {
+    'uid': '1349',
+    'user_email': 'admin%40linsir.org',
+}
+headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36',
+           'X-Requested-With': 'XMLHttpRequest',
+       }
+requests.get(url, cookies=cookies, headers=headers,)
+# Session
+如果我们想把所有的请求都使用相同的cookies时，就需要用session对象，它会在同一个Session实例发出的所有请求之间保持cookies。
+
+s = requests.Session()
+r = s.get("http://httpbin.org/cookies")
+现在我们把前面的合并起来就成了下面的代码。
+
+s = requests.Session()
+cookies = {
+    'uid': '1349',
+    'user_email': 'admin%40linsir.org',
+}
+headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36',
+           'X-Requested-With': 'XMLHttpRequest',
+       }
+s.cookies =cookies
+s.headers = headers
+s.get(url)
+# cookies 自动存入文件与导从文件入。
+如果我们要把登录获得的cookies保存起来，下次直接从文件读取，这样子就少了登录多好。
+
+class douban_robot:
+
+    def __init__(self):
+        self.session = requests.Session()
+    def load_cookies(self):
+        with open(cookies_file) as f:
+            self.session.cookies = requests.utils.cookiejar_from_dict(pickle.load(f))
+    
+    def save_cookies(self):
+        with open(cookies_file, 'w') as f:
+            pickle.dump(requests.utils.dict_from_cookiejar(self.session.cookies), f)
+# requests cookies 注意
+但是在使用过程有点小问题，requests 在一个session中任何你传递给请求方法的字典都会与已设置会话层数据合并，但是用户设置的优先级更高，这里就会产生一个问题，当我们从文件载入的cookies/headers当过期失效，服务端给我发来的新的cookies就不会更新，通过文档找到解决办法：
+
+将cookies/headers对应的values设置成None.
+自行更新cookies/headers.
+以cookies为例，每次requests请求后，我们可以判断r.cookies是否为值来更新cookies
+
+r = self.session.get('https://linsir.org',)
+if r.cookies.get_dict():
+    self.cookies.update(r.cookies)
+如果多次跳转：
+
+if response.history: 
+    for r in response.history: 
+        self.cookies.update(r.cookies)
+
+# 总结
+requests 大法好，简单强大，强烈推荐。
+Read the Fucking Manual
+google 大法好。
+参考：
+
+Python中Cookie的处理（二）cookielib库
+Python中Cookie的处理：自动处理Cookie，保存为Cookie文件，从文件载入Cookie
+how-to-save-requests-python-cookies-to-a-file
+提醒：本文最后更新于 1474天前，文中所描述的信息可能已发生改变，请谨慎使用。
+
+版权属于：Linsir’s Blog
+
+原文地址：https://linsir.org/post/python_auto_handle_cookies
+
+转载时必须以链接形式注明原始出处及本声明。
+
