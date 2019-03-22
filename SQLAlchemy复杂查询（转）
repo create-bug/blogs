@@ -1,0 +1,91 @@
+原文： https://www.cnblogs.com/echeng192/p/7791984.html
+
+
+最近个人用python + flask搞了一个小项目，ORM用到的是SQLAlchemy。
+
+SQLAlchemy的查询方式非常灵活，你所能想像到的复杂SQL 语句，基本上都可以实现。这里简单的总结一下常用的查询技巧。
+
+多条件组合，可以用and_，or_实现。最外层时，and_可以省略，默认用逗号分开条件。
+复制代码
+db.session.query(User).filter(
+        and_(
+            or_(User.name==name1,User.name==name2),
+            or_(User.status==1,User.status==2)
+        ),
+        User.active==1
+    ).first()
+复制代码
+ 
+
+动态组合条件。针对不同的场景，可能需要不同的查询条件，类似动态的拼接SQL 语句。
+复制代码
+        if filter_type == 1:
+            search = and_(GameRoom.status ==1,or_(
+                and_(GameRoom.white_user_id == user_id,
+                     GameRoom.active_player == 1),
+                and_(GameRoom.black_user_id == user_id,
+                     GameRoom.active_player == 0)))
+        elif filter_type == 2:
+            search = and_(GameRoom.status ==1,or_(
+                and_(GameRoom.white_user_id == user_id,
+                     GameRoom.active_player == 0),
+                and_(GameRoom.black_user_id == user_id,
+                     GameRoom.active_player == 1)))
+        elif filter_type == 3:
+            search = GameRoom.create_by == user_id
+        
+        db.session.query(GameRoom).filter(search).all()
+复制代码
+ 
+
+关联查询。对应SQL的join和left join等。
+    session.query(User, Address).filter(User.id == Address.user_id).all()
+    session.query(User).join(User.addresses).all()
+    session.query(User).outerjoin(User.addresses).all()
+ 
+
+使用别名用aliased，aliased在orm包中。当要对同一个表使用多次关联时，可能需要用到别名。同时，如果查询的结果有多个同名的字段，可以使用label重命名。
+复制代码
+black_user = orm.aliased(User)
+white_user = orm.aliased(User)
+db.session.query(
+            GameRoom,
+            black_user.score.label("black_score"),
+            white_user.score.label("white_score")
+            ).outerjoin(black_user,GameRoom.black_user_id==black_user.user_id).outerjoin(
+                white_user,GameRoom.white_user_id==white_user.user_id).filter(
+                    GameRoom.id==room_id
+            ).all()
+复制代码
+ 
+
+聚合查询和使用数据库函数。func可以调用各种聚合函数，和当前数据库支持的其它函数。
+session.query(User.name, func.count('*').label("user_count")).group_by(User.name).all()
+
+session.query(User.name, func.sum(User.id).label("user_id_sum")).filter(func.to_days(User.create_date)==func.to_days(func.now())).group_by(User.name).all()
+ 
+
+ 子查询。
+stmt = db.session.query(Address.user_id, func.count('*').label("address_count")).group_by(Address.user_id).subquery()
+db.session.query(User, stmt.c.address_count).outerjoin((stmt, User.id == stmt.c.user_id)).order_by(User.id).all()
+ 
+
+直接运行SQL语句查询。如果查询实在太复杂，觉得用SQLAlchemy查询方式很难实现，或者要通过存储过程实现查询，可以让SQLAlchemy直接运行SQL语句返回结果。
+        sql ="""select b.user_id,b.user_name,b.icon,b.score,a.add_score from
+            (select user_id, sum(score_new - score_old) as add_score from user_score_log
+            where year(create_date)=year(now()) and month(create_date)=month(now())
+            group by user_id) a join users b on a.user_id=b.user_id
+            order by a.add_score desc limit 50"""
+        list_top = db.session.execute(sql).fetchall()
+ 
+
+分页查询。sqlalchemy中分页用到pagination，先不说性能怎么样，使用起来是真的非常方便。
+        pagination = GameMessage.query.filter(GameMessage.game_id==game_id).\
+            order_by(GameMessage.id.desc()).\
+            paginate(page, per_page=20, error_out=True)
+        pages = pagination.pages
+        total = pagination.total
+        items = pagination.items
+ 
+
+总的来说，SQLAlchemy是我用过的最好的ORM 框架之一（其实我最熟的是.net，python也只用过这一个ORM工具）。基本上常见的SQL 语句，这里都已经实现。如果你的查询实在太复杂的，可能需要用存储过程来实现，直接运行SQL也不失为一种简便的方法。
