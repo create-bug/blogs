@@ -1,0 +1,21 @@
+原文： http://zgljl2012.com/postgresqlshi-xian-zi-zeng-id/
+
+
+Postgresql实现自增ID
+08 APRIL 2017 on postgresql
+在Postgresql中实现自增ID有两种方法，一种是创建表的时候使用SERIAL（序列类型）；另一种先创建一个序列，然后将表类型改为序列的下一个值。
+创建语句中使用Serial
+serial类型不是一种真正的类型，它实际上是一个序列，包括smallserial（smallint,short）,serial(int)和bigserial(bigint,long long int)，smallserial,serial和bigserial的范围都是(1,9223372036854775807)。
+
+当一个字段为序列类型时其实是创建了一个序列，INSERT插入数据的时候，如果没有给该字段赋值会默认获取对应序列的下一个值。
+
+SQL语句：
+
+create table user(id serial,name varchar(10));  
+先创建Serial，然后修改类型
+创建Serial
+
+create sequence serial_user_id increment by 1 minvalue 1 no maxvalue start with 1;  
+修改字段
+
+alter table user alter column id set default nextval('serial_user_id');  
