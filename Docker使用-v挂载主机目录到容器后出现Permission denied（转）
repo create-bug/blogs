@@ -1,0 +1,38 @@
+1. 在挂载主机目录的到容器后，操作挂载的目录出现权限问题：
+
+# 将主机上的/data/share/master目录挂载到容器的/opt/share目录
+docker run -it --name=master --hostname=master -v /data/share/master:/opt/share  centos-hadoop /bin/bash
+[root@master share]# pwd　　#进入挂载目录
+/opt/share
+[root@master share]# touch hello　　#建立新文件　　
+touch: cannot touch 'hello': Permission denied　　# 无权建立文件
+2. 问题原因及解决
+
+原因是CentOS7中的安全模块selinux把权限禁掉了，至少有以下三种方式解决挂载的目录没有权限的问题：
+
+2.1 在运行容器的时候，给容器加特权，也就是加上   –privileged=true 参数：
+
+如下运行容器则无此问题：
+
+docker run -it --name=master --hostname=master -v /data/share/master:/opt/share --privileged=true   centos-hadoop /bin/bash
+2.2 临时关闭selinux：
+
+setenforce 0
+
+2.3  添加selinux规则，改变要挂载的目录的安全性文本
+
+关于SElinux的知识可以去看《鸟哥的linux私房菜》
+
+复制代码
+# 更改安全性文本的格式如下
+chcon [-R] [-t type] [-u user] [-r role] 文件或者目录
+
+选顷不参数： 
+-R  ：连同该目录下癿次目录也同时修改； 
+-t  ：后面接安全性本文的类型字段！例如 httpd_sys_content_t ； 
+-u  ：后面接身份识别，例如 system_u； 
+-r  ：后面街觇色，例如 system_r
+复制代码
+根据格式我们需要更改/data/share/master的安全性文档
+
+chcon -Rt svirt_sandbox_file_t /data/share/master
