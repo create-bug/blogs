@@ -1,0 +1,12 @@
+当前时间向前推一天：
+SELECT current_timestamp - interval '1 day'
+当前时间向前推一个月：
+SELECT current_timestamp - interval '1 month'
+当前时间向前推一年：
+SELECT current_timestamp - interval '1 year'
+当前时间向前推一小时：
+SELECT current_timestamp - interval '1 hour'
+当前时间向前推一分钟：
+SELECT current_timestamp - interval '1 min'
+当前时间向前推60秒：
+SELECT current_timestamp - interval '60 second'
